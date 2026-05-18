@@ -1,0 +1,33 @@
+when:
+  - event: pull_request
+  - event: push
+    branch: main
+
+# AzerothCore (3.3.5a) full builds are multi-hour — per the project's
+# CLAUDE.md, we don't full-build here by default. CI verifies that:
+#   1. CMake configures cleanly (catches broken option/include logic)
+#   2. The SQL update files in data/sql/updates/pending_* aren't malformed
+# Promote to a full build once a dedicated heavy agent joins the pool.
+
+steps:
+  configure:
+    image: ubuntu:24.04
+    commands:
+      - apt-get update
+      - DEBIAN_FRONTEND=noninteractive apt-get install -y
+        cmake build-essential git pkg-config
+        libssl-dev libmysqlclient-dev libreadline-dev libncurses5-dev
+        libace-dev libboost-all-dev zlib1g-dev libbz2-dev
+      - cmake -S . -B build
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        -DTOOLS_BUILD=none
+        -DSCRIPTS=static
+
+  sql-syntax:
+    image: mysql:8
+    commands:
+      # Pending SQL files must at least parse. We don't run them — that
+      # needs a real DB layout — but `--syntax-check` catches typos.
+      - >
+        find data/sql/updates/pending_* -name '*.sql' -print0 2>/dev/null |
+        xargs -0 -r -n1 sh -c 'mysql --syntax-check --batch < "$0" || { echo "syntax error in $0"; exit 1; }'
