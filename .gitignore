@@ -18,6 +18,10 @@
 !/env/dist/.gitkeep
 /env/user/*
 /.env*
+
+# secrets (never commit)
+/.secrets.toml
+/.secrets*
 /apps/joiner
 /deps/deno
 /data/sql/custom/*
