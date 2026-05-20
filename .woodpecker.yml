@@ -1,7 +1,7 @@
 when:
   - event: pull_request
   - event: push
-    branch: main
+    branch: master
 
 # AzerothCore (3.3.5a) full builds are multi-hour — per the project's
 # CLAUDE.md, we don't full-build here by default. CI verifies that:
